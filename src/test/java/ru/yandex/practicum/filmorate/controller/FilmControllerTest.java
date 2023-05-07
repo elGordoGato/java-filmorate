@@ -82,8 +82,8 @@ class FilmControllerTest {
     @Test
     void shouldThrowExceptionWhenCreateFilmWithTooLongDescription() {
         Film tooLongDescriptionFilm = testFilm.toBuilder().description("a".repeat(201)).build();
-        assertThrows(ValidationException.class, () -> filmController.create(tooLongDescriptionFilm)
-                , "description should be less than 200 symbols, instead: " + testFilm.getDescription().length());
+        assertThrows(ValidationException.class, () -> filmController.create(tooLongDescriptionFilm),
+                 "description should be less than 200 symbols, instead: " + testFilm.getDescription().length());
     }
 
 
