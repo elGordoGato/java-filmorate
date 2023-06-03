@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.controller.validation.FilmValidator;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
@@ -16,24 +17,27 @@ public class FilmController {
     private final HashMap<Integer, Film> films = new HashMap<>();
 
     @GetMapping
+    @ResponseBody
     public HashSet<Film> getAll() {
         return new HashSet<>(films.values());
     }
 
     @PostMapping
+    @ResponseBody
     public Film create(@RequestBody Film film) {
         FilmValidator.validate(film);
         if (films.containsKey(film.getId())) {
-            throw new ValidationException("this film already exist");
+            throw new ValidationException(HttpStatus.CONFLICT, "this film already exist");
         }
         return putToDatabase(film);
     }
 
     @PutMapping
+    @ResponseBody
     public Film update(@RequestBody Film film) {
         FilmValidator.validate(film);
         if (!films.containsKey(film.getId())) {
-            throw new ValidationException("this film does not exist");
+            throw new ValidationException(HttpStatus.NOT_FOUND, "this film does not exist");
         }
         return putToDatabase(film);
     }

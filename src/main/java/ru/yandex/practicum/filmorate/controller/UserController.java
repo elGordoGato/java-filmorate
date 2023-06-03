@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.controller.validation.UserValidator;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
@@ -24,7 +25,7 @@ public class UserController {
     public User create(@RequestBody User user) {
         UserValidator.validate(user);
         if (users.containsKey(user.getId())) {
-            throw new ValidationException("This user already exist");
+            throw new ValidationException(HttpStatus.CONFLICT, "This user already exist");
         }
         return putToDatabase(user);
     }
@@ -33,7 +34,7 @@ public class UserController {
     public User update(@RequestBody User user) {
         UserValidator.validate(user);
         if (!users.containsKey(user.getId())) {
-            throw new ValidationException("This user does not exist");
+            throw new ValidationException(HttpStatus.NOT_FOUND, "This user does not exist");
         }
         return putToDatabase(user);
     }

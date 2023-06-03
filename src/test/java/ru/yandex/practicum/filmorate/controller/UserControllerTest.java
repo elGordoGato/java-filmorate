@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
@@ -27,10 +26,6 @@ class UserControllerTest {
                 .name("John Doe")
                 .build();
         userController.create(testUser);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test

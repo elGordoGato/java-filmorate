@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
@@ -28,10 +27,6 @@ class FilmControllerTest {
                 .duration(99999999)
                 .build();
         filmController.create(testFilm);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
@@ -83,7 +78,7 @@ class FilmControllerTest {
     void shouldThrowExceptionWhenCreateFilmWithTooLongDescription() {
         Film tooLongDescriptionFilm = testFilm.toBuilder().description("a".repeat(201)).build();
         assertThrows(ValidationException.class, () -> filmController.create(tooLongDescriptionFilm),
-                 "description should be less than 200 symbols, instead: " + testFilm.getDescription().length());
+                "description should be less than 200 symbols, instead: " + testFilm.getDescription().length());
     }
 
 

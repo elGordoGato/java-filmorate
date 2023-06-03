@@ -1,15 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NonNull;
 
 import java.time.LocalDate;
 
 @Data
 @Builder(toBuilder = true)
 public class Film {
-    @Setter
-    @Getter
-    private static int counter = 1;
+    public static int counter = 1;
     @NonNull
     private final String name;
     @NonNull
