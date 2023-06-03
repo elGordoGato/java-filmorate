@@ -17,13 +17,11 @@ public class FilmController {
     private final HashMap<Integer, Film> films = new HashMap<>();
 
     @GetMapping
-    @ResponseBody
     public HashSet<Film> getAll() {
         return new HashSet<>(films.values());
     }
 
     @PostMapping
-    @ResponseBody
     public Film create(@RequestBody Film film) {
         FilmValidator.validate(film);
         if (films.containsKey(film.getId())) {
@@ -33,7 +31,6 @@ public class FilmController {
     }
 
     @PutMapping
-    @ResponseBody
     public Film update(@RequestBody Film film) {
         FilmValidator.validate(film);
         if (!films.containsKey(film.getId())) {
