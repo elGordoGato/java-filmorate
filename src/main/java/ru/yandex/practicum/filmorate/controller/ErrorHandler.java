@@ -12,6 +12,6 @@ public class ErrorHandler {
 
     @ExceptionHandler
     public ResponseEntity<Map<String, String>> handleValidationException(final ValidationException e) {
-        return new ResponseEntity<>(Map.of("error:", e.getMessage()), e.getSTATUS());
+        return new ResponseEntity<>(Map.of("error:", e.getMessage()), e.getStatus());
     }
 }

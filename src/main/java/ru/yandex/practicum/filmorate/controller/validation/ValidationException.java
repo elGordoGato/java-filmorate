@@ -6,16 +6,16 @@ import org.springframework.http.HttpStatus;
 @Slf4j
 public class ValidationException extends RuntimeException {
     final String message;
-    final HttpStatus STATUS;
+    final HttpStatus status;
 
-    public ValidationException(HttpStatus STATUS, String message) {
+    public ValidationException(HttpStatus status, String message) {
         log.error(message);
-        this.STATUS = STATUS;
+        this.status = status;
         this.message = message;
     }
 
-    public HttpStatus getSTATUS() {
-        return STATUS;
+    public HttpStatus getStatus() {
+        return status;
     }
 
     @Override
