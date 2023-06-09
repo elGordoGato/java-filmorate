@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
-    private final static String USER = "Пользователь #";
+    private static final String USER = "Пользователь #";
     private static Integer counter = 1;
     private final HashMap<Integer, User> users = new HashMap<>();
 
