@@ -3,12 +3,12 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.controller.validation.UserValidator;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -25,53 +25,65 @@ public class UserController {
 
     @GetMapping
     public Set<User> getAll() {
-        log.info(userService.userStorage.getAll().toString());
-        return userService.userStorage.getAll();
+        log.info("Request to get all users");
+        Set<User> allUsers = userService.getAll();
+        log.info("Found {} users: {}", allUsers.size(), allUsers.stream()
+                .map(user -> String.format("User #%s - %s\n", user.getId(), user.getName()))
+                .collect(Collectors.toList()));
+        return allUsers;
     }
 
     @GetMapping(value = "/{id}")
     public User getUser(@PathVariable Integer id) {
-        log.info(userService.userStorage.getUser(id).toString());
-        return userService.userStorage.getUser(id);
+        log.info("Request to get user with id: {}", id);
+        return userService.getById(id);
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        UserValidator.validate(user);
-        User newUser = userService.userStorage.addUser(user);
-        log.info(newUser.toString());
-        return newUser;
+        log.info("Request to create user: {}", user);
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody User user) {
-        UserValidator.validate(user);
-        userService.userStorage.updateUser(user);
-        log.info(userService.userStorage.getUser(user.getId()).toString());
-        return userService.userStorage.getUser(user.getId());
+        log.info("Request to update user: {}", user);
+        return userService.update(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Integer id) {
+        log.info("Request to delete user: #{}", id);
+        userService.remove(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public void makeFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
-        userService.addFriend(id, friendId);
-        log.info(userService.getFriends(id).toString());
+        log.info("Request to make users friends: #{} and #{}", id, friendId);
+        userService.makeFriends(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
-        userService.removeFriend(id, friendId);
-        log.info(userService.getFriends(id).toString());
+    public void ruinFriendship(@PathVariable Integer id, @PathVariable Integer friendId) {
+        log.info("Request to destroy friendship between users: #{} and #{}", id, friendId);
+        userService.destroyFriendship(id, friendId);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> findFriends(@PathVariable Integer id) {
-        log.info(userService.getFriends(id).toString());
-        return userService.getFriends(id);
+        log.info("Request to find friends of user #{}", id);
+        List<User> friends = userService.getFriends(id);
+        log.info("Found {} friends, Friend's ID: {}", friends.size(),
+                friends.stream().map(User::getId).collect(Collectors.toList()));
+        return friends;
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Set<User> findFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
-        log.info(userService.getCommonFriends(id, otherId).toString());
-        return userService.getCommonFriends(id, otherId);
+    public Set<User> findCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
+        log.info("Request to find common friends for user: #{} and #{}", id, otherId);
+        Set<User> commonFriends = userService.getCommonFriends(id, otherId);
+        log.info("Found {} common friends, Friend's ID: {}", commonFriends.size(),
+                commonFriends.stream().map(User::getId).collect(Collectors.toList()));
+        return commonFriends;
     }
 }

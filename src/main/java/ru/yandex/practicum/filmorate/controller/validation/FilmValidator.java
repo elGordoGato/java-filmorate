@@ -18,8 +18,6 @@ public class FilmValidator {
         if (film.getDuration() <= 0) {
             throw new ValidationException(Film.class + ": duration should be positive");
         }
-        if (film.getId() == null) {
-            film.setId(Film.counter++);
-        }
+
     }
 }

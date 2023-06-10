@@ -3,15 +3,24 @@ package ru.yandex.practicum.filmorate.storage;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public interface UserStorage {
-    User addUser(User user);
+    Optional<User> putUser(User user);
 
-    User getUser(Integer id);
+    Optional<User> findById(Integer id);
 
-    void removeUser(User user);
+    Optional<User> removeById(Integer id);
 
-    void updateUser(User user);
+    HashSet<User> findAll();
 
-    HashSet<User> getAll();
+    Integer[] addFriend(User user, User friend);
+
+    boolean removeFriend(User user, User friend);
+
+    List<User> findFriends(User user);
+
+    Set<User> findCommonFriends(User user, User friend);
 }

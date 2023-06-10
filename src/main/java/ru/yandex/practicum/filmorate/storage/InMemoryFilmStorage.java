@@ -1,60 +1,53 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
-import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
-    private static final String FILM = "Фильм";
-    protected final HashMap<Integer, Film> films = new HashMap<>();
+    private final HashMap<Integer, Film> films = new HashMap<>();
 
     @Override
-    public Film addFilm(Film film) {
-        if (films.containsKey(film.getId())) {
-            throw new ValidationException("Этот фильм уже существует");
-        }
-        if (film.getLikedUsers() == null) {
-            film.setLikedUsers(new HashSet<>());
-        }
+    public Film put(Film film) {
         films.put(film.getId(), film);
-        return getFilm(film.getId());
+        return films.get(film.getId());
     }
 
     @Override
-    public Film getFilm(Integer id) {
-        if (films.get(id) == null) {
-            throw new NotFoundException(FILM);
-        }
-        return films.get(id);
+    public Optional<Film> findById(Integer id) {
+        return Optional.ofNullable(films.get(id));
     }
 
     @Override
-    public void removeFilm(Film film) {
-        Optional<Film> deletedFIlm = Optional.ofNullable(films.remove(film.getId()));
-        if (deletedFIlm.isEmpty()) {
-            throw new NotFoundException(FILM);
-        }
+    public Optional<Film> removeById(Integer id) {
+        return Optional.ofNullable(films.remove(id));
     }
 
     @Override
-    public void updateFilm(Film film) {
-        if (!films.containsKey(film.getId())) {
-            throw new NotFoundException(FILM);
-        }
-        if (film.getLikedUsers() == null) {
-            film.setLikedUsers(new HashSet<>());
-        }
-        films.put(film.getId(), film);
-    }
-
-    @Override
-    public HashSet<Film> getAll() {
+    public HashSet<Film> findAll() {
         return new HashSet<>(films.values());
+    }
+
+    @Override
+    public Set<Integer> addLike(Film film, User user) {
+        film.getLikedUsers().add(user.getId());
+        return film.getLikedUsers();
+    }
+
+    @Override
+    public boolean removeLike(Film film, User user) {
+        return film.getLikedUsers().remove(user.getId());
+    }
+
+    @Override
+    public List<Film> findTop(Integer count) {
+        return findAll().stream()
+                .sorted((f0, f1) -> f1.getLikedUsers().size() - f0.getLikedUsers().size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }

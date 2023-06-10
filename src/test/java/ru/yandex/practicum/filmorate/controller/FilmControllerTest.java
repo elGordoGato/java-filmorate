@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -22,7 +23,7 @@ class FilmControllerTest {
     FilmController filmController;
     Film testFilm;
 
-    InMemoryUserStorage userStorage = new InMemoryUserStorage();
+    UserService userService = new UserService(new InMemoryUserStorage());
     User testUser = User.builder()
             .email("noKnowledge@java.com")
             .birthday(LocalDate.of(1985, 12, 25))
@@ -33,7 +34,7 @@ class FilmControllerTest {
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userStorage));
+        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userService));
         testFilm = Film.builder()
                 .name("How to study Java")
                 .releaseDate(LocalDate.of(1985, 12, 25))
@@ -41,12 +42,12 @@ class FilmControllerTest {
                 .duration(99999999)
                 .build();
         filmController.create(testFilm);
-        userStorage.addUser(testUser);
+        userService.create(testUser);
     }
 
     @Test
     void getAll() {
-        assertEquals(Set.of(testFilm), filmController.getAllFilms());
+        assertEquals(Set.of(testFilm), filmController.getAll());
     }
 
     @Test
@@ -101,7 +102,7 @@ class FilmControllerTest {
     void update() {
         Film newFilm = testFilm.toBuilder().name("New name").build();
         filmController.update(newFilm);
-        assertEquals(Set.of(newFilm), filmController.getAllFilms());
+        assertEquals(Set.of(newFilm), filmController.getAll());
     }
 
     @Test
@@ -141,8 +142,8 @@ class FilmControllerTest {
                 .duration(99999999)
                 .build();
         filmController.create(testFilm2);
-        assertEquals(List.of(testFilm, testFilm2), filmController.findTopFilms(3));
-        assertEquals(List.of(testFilm), filmController.findTopFilms(1));
+        assertEquals(List.of(testFilm, testFilm2), filmController.findTop(3));
+        assertEquals(List.of(testFilm), filmController.findTop(1));
     }
 
 }

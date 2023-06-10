@@ -53,7 +53,7 @@ class UserControllerTest {
 
     @Test
     void shouldCreateUserWithAbsentId() {
-        userController.userService.userStorage.removeUser(testUser);
+        userController.delete(testUser.getId());
         int oldId = testUser.getId();
         testUser.setId(null);
         assertEquals(testUser.toBuilder().id(oldId + 1).build(), userController.create(testUser));
@@ -83,7 +83,7 @@ class UserControllerTest {
 
     @Test
     void shouldAssignNameToUserWithAbsentName() {
-        userController.userService.userStorage.removeUser(testUser);
+        userController.delete(testUser.getId());
         testUser.setName(null);
         testUser.setId(2);
         assertEquals(testUser.toBuilder().name("elGordoGato").build(), userController.create(testUser));
@@ -114,9 +114,9 @@ class UserControllerTest {
     @Test
     void shouldRuinFriendship() {
         shouldAddFriend();
-        userController.removeFriend(testBestFriend.getId(), testUser.getId());
+        userController.ruinFriendship(testBestFriend.getId(), testUser.getId());
         assertEquals(List.of(), userController.findFriends(testBestFriend.getId()));
-        assertThrows(NotFoundException.class, () -> userController.removeFriend(testOtherFriend.getId(), testUser.getId()));
+        assertThrows(NotFoundException.class, () -> userController.ruinFriendship(testOtherFriend.getId(), testUser.getId()));
         assertEquals(List.of(), userController.findFriends(testUser.getId()));
     }
 
@@ -133,8 +133,8 @@ class UserControllerTest {
     @Test
     void shouldFindCommonFriends() {
         shouldFindFriends();
-        assertEquals(Set.of(testBestFriend), userController.findFriends(testUser.getId(), testOtherFriend.getId()));
-        assertThrows(NotFoundException.class, () -> userController.findFriends(testUser.getId(), 999));
+        assertEquals(Set.of(testBestFriend), userController.findCommonFriends(testUser.getId(), testOtherFriend.getId()));
+        assertThrows(NotFoundException.class, () -> userController.findCommonFriends(testUser.getId(), 999));
     }
 
     private void makeFriends() {

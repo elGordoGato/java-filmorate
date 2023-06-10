@@ -12,9 +12,6 @@ public class UserValidator {
         if (user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException(User.class + ": Login is absent or contains spaces");
         }
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
         if (user.getBirthday().isAfter(LocalDate.now())) {
             throw new ValidationException(User.class + ": Birthday can not be in future");
         }
