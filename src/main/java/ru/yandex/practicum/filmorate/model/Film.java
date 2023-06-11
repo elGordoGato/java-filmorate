@@ -5,11 +5,11 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
 public class Film {
-    public static int counter = 1;
     @NonNull
     private final String name;
     @NonNull
@@ -19,6 +19,7 @@ public class Film {
     @NonNull
     private final Integer duration;
     private Integer id;
+    private Set<Integer> likedUsers;
 
 
 }

@@ -2,10 +2,17 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,10 +23,18 @@ class FilmControllerTest {
     FilmController filmController;
     Film testFilm;
 
+    UserService userService = new UserService(new InMemoryUserStorage());
+    User testUser = User.builder()
+            .email("noKnowledge@java.com")
+            .birthday(LocalDate.of(1985, 12, 25))
+            .login("elGordoGato")
+            .name("John Doe")
+            .build();
+
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
+        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userService));
         testFilm = Film.builder()
                 .name("How to study Java")
                 .releaseDate(LocalDate.of(1985, 12, 25))
@@ -27,6 +42,7 @@ class FilmControllerTest {
                 .duration(99999999)
                 .build();
         filmController.create(testFilm);
+        userService.create(testUser);
     }
 
     @Test
@@ -92,6 +108,42 @@ class FilmControllerTest {
     @Test
     void shouldThrowExceptionWhenUpdateFilmWithNewId() {
         testFilm.setId(999);
-        assertThrows(ValidationException.class, () -> filmController.update(testFilm), "this id does not exist");
+        assertThrows(NotFoundException.class, () -> filmController.update(testFilm), "this id does not exist");
     }
+
+    @Test
+    void shouldLikeFilm() {
+        filmController.like(testFilm.getId(), testUser.getId());
+        assertEquals(Set.of(testUser.getId()), testFilm.getLikedUsers());
+        assertThrows(NotFoundException.class, () -> filmController.like(testFilm.getId(), testUser.getId() + 1),
+                "this user does not exist");
+        assertThrows(NotFoundException.class, () -> filmController.like(testFilm.getId() + 1, testUser.getId()),
+                "this film does not exist");
+    }
+
+    @Test
+    void shouldUnlikeFilm() {
+        shouldLikeFilm();
+        filmController.unlike(testFilm.getId(), testUser.getId());
+        assertEquals(Set.of(), testFilm.getLikedUsers());
+        assertThrows(NotFoundException.class, () -> filmController.unlike(testFilm.getId(), testUser.getId() + 1),
+                "this user does not exist");
+        assertThrows(NotFoundException.class, () -> filmController.unlike(testFilm.getId() + 1, testUser.getId()),
+                "this film does not exist");
+    }
+
+    @Test
+    void shouldFindTopFilms() {
+        filmController.like(testFilm.getId(), testUser.getId());
+        Film testFilm2 = Film.builder()
+                .name("How to study Java: 2 - Revenge")
+                .releaseDate(LocalDate.of(1985, 12, 26))
+                .description("Java for dummies: revenge")
+                .duration(99999999)
+                .build();
+        filmController.create(testFilm2);
+        assertEquals(List.of(testFilm, testFilm2), filmController.findTop(3));
+        assertEquals(List.of(testFilm), filmController.findTop(1));
+    }
+
 }
