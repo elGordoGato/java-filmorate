@@ -17,7 +17,7 @@ public interface FilmStorage {
     Optional<Film> removeById(Integer id);
 
 
-    HashSet<Film> findAll();
+    Set<Film> findAll();
 
     Set<Integer> addLike(Film film, User user);
 

@@ -2,12 +2,13 @@ package ru.yandex.practicum.filmorate.storage;
 
 
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Repository
 public class InMemoryUserStorage implements UserStorage {
 
     private final HashMap<Integer, User> users = new HashMap<>();
@@ -23,12 +24,12 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> removeById(Integer id) {
-        return Optional.ofNullable(users.remove(id));
+    public boolean removeById(Integer id) {
+        return Optional.ofNullable(users.remove(id)).isPresent();
     }
 
     @Override
-    public HashSet<User> findAll() {
+    public Set<User> findAll() {
         return new HashSet<>(users.values());
     }
 
