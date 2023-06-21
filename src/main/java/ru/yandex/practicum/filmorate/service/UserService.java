@@ -1,12 +1,14 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.UserValidator;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,11 +21,10 @@ public class UserService {
     private static final String USER = "Пользователь #";
     private static Integer counter = 1;
 
+    private final UserStorage userStorage;
 
-    private final InMemoryUserStorage userStorage;
-
-
-    public UserService(InMemoryUserStorage userStorage) {
+    @Autowired
+    public UserService(@Qualifier("UserDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -37,7 +38,7 @@ public class UserService {
         return user.get();
     }
 
-    public HashSet<User> getAll() {
+    public Set<User> getAll() {
         return userStorage.findAll();
     }
 
@@ -69,9 +70,13 @@ public class UserService {
 
 
     public void remove(Integer id) {
-        log.info("User: {} - deleted", userStorage.removeById(id)
-                .orElseThrow(() -> new NotFoundException(USER + id)));
+        if(userStorage.removeById(id)){
+            log.info("User: {} - deleted", id);
+        } else {
+            throw new NotFoundException(USER + id);
+        }
     }
+
 
 
     public void makeFriends(Integer userId, Integer friendId) {

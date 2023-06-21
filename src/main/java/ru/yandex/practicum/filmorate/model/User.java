@@ -5,19 +5,20 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
 public class User {
+    private Integer id;
     @NonNull
     private final String email;
     @NonNull
     private final String login;
     @NonNull
-    private final LocalDate birthday;
-    private Integer id;
+    private final Date birthday;
     private String name;
     private Set<Integer> friends;
 

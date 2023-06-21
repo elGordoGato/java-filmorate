@@ -12,9 +12,9 @@ public interface UserStorage {
 
     Optional<User> findById(Integer id);
 
-    Optional<User> removeById(Integer id);
+   boolean removeById(Integer id);
 
-    HashSet<User> findAll();
+    Set<User> findAll();
 
     Integer[] addFriend(User user, User friend);
 

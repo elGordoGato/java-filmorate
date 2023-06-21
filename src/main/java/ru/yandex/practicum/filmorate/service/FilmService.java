@@ -2,16 +2,18 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.controller.validation.FilmValidator;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,10 +24,11 @@ public class FilmService {
     private static Integer counter = 1;
 
     private final UserService userService;
-    private final InMemoryFilmStorage filmStorage;
+
+    private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmService(InMemoryFilmStorage filmStorage, UserService userService) {
+    public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
         this.userService = userService;
     }
@@ -45,7 +48,7 @@ public class FilmService {
         return filmStorage.put(film);
     }
 
-    public HashSet<Film> getAll() {
+    public Set<Film> getAll() {
         return filmStorage.findAll();
     }
 
