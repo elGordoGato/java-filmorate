@@ -10,10 +10,8 @@ import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -38,7 +36,7 @@ public class UserService {
         return user.get();
     }
 
-    public Set<User> getAll() {
+    public List<User> getAll() {
         return userStorage.findAll();
     }
 
@@ -53,7 +51,7 @@ public class UserService {
             counter = user.getId();
         }
         setupUser(user);
-        userStorage.putUser(user);
+        userStorage.addUser(user);
         log.info("User created: {}", user);
         return user;
     }
@@ -64,7 +62,7 @@ public class UserService {
             throw new NotFoundException(USER + user.getId());
         }
         setupUser(user);
-        log.info("User updated: {}\nNew value: {}", userStorage.putUser(user), user);
+        log.info("User updated: {}\nNew value: {}", userStorage.updateUser(user), user);
         return userStorage.findById(user.getId()).get();
     }
 
@@ -96,16 +94,13 @@ public class UserService {
         return userStorage.findFriends(getById(userId));
     }
 
-    public Set<User> getCommonFriends(Integer userId, Integer friendId) {
+    public List<User> getCommonFriends(Integer userId, Integer friendId) {
         return userStorage.findCommonFriends(getById(userId), getById(friendId));
     }
 
     private void setupUser(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
-        }
-        if (user.getFriends() == null) {
-            user.setFriends(new HashSet<>());
         }
     }
 }

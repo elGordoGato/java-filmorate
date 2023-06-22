@@ -18,9 +18,8 @@ public class User {
     @NonNull
     private final String login;
     @NonNull
-    private final Date birthday;
+    private final LocalDate birthday;
     private String name;
-    private Set<Integer> friends;
 
     @Override
     public boolean equals(Object o) {

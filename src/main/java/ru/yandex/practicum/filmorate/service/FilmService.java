@@ -10,11 +10,8 @@ import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,12 +40,11 @@ public class FilmService {
         } else if (counter < film.getId()) {
             counter = film.getId();
         }
-        setup(film);
         log.info("Film created: {}", film);
-        return filmStorage.put(film);
+        return filmStorage.add(film);
     }
 
-    public Set<Film> getAll() {
+    public List<Film> getAll() {
         return filmStorage.findAll();
     }
 
@@ -66,19 +62,22 @@ public class FilmService {
         if (filmStorage.findById(film.getId()).isEmpty()) {
             throw new NotFoundException(FILM + film.getId());
         }
-        setup(film);
-        log.info("Film updated: {}\nNew value: {}", filmStorage.put(film), film);
+        log.info("Film updated\nNew value: {}", filmStorage.update(film));
         return filmStorage.findById(film.getId()).get();
     }
 
     public void removeById(Integer id) {
-        log.info("Film: {} - deleted", filmStorage.removeById(id)
-                .orElseThrow(() -> new NotFoundException(FILM + id)));
+        if (filmStorage.removeById(id)) {
+            log.info("Film: {} - deleted", id);
+        } else {
+            throw new NotFoundException(FILM + id);
+        }
     }
 
     public void likeFilm(Integer filmId, Integer userId) {
-        log.info("Film {} was liked by user: {}", filmId,
-                filmStorage.addLike(getById(filmId), userService.getById(userId)));
+        if(filmStorage.addLike(getById(filmId), userService.getById(userId))){
+            log.info("Film {} was liked by user: {}", filmId, userId);
+        }
     }
 
     public void deleteLike(Integer filmId, Integer userId) {
@@ -90,15 +89,11 @@ public class FilmService {
 
     public List<Film> getTop(Integer count) {
         List<Film> topFilms = filmStorage.findTop(count);
-        log.info("Top {} IMDB: {}", count, topFilms.stream()
-                .map(film -> String.format("%s - %s", film.getName(), film.getLikedUsers().size()))
-                .collect(Collectors.toList()));
+        log.info("Top {} IMDB: {}", count, topFilms);
         return topFilms;
     }
 
-    private void setup(Film film) {
-        if (film.getLikedUsers() == null) {
-            film.setLikedUsers(new HashSet<>());
-        }
+    public List<Integer> getLikes(Integer id) {
+        return filmStorage.findLikes(id);
     }
 }

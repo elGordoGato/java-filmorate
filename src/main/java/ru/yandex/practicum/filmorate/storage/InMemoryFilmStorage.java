@@ -1,19 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryFilmStorage implements FilmStorage {
     private final HashMap<Integer, Film> films = new HashMap<>();
 
     @Override
-    public Film put(Film film) {
+    public Film add(Film film) {
         films.put(film.getId(), film);
         return films.get(film.getId());
     }
@@ -24,31 +22,38 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Optional<Film> removeById(Integer id) {
-        return Optional.ofNullable(films.remove(id));
+    public Film update(Film film) {
+        films.put(film.getId(), film);
+        return films.get(film.getId());
     }
 
     @Override
-    public Set<Film> findAll() {
-        return new HashSet<>(films.values());
+    public boolean removeById(Integer id) {
+        return Optional.ofNullable(films.remove(id)).isPresent();
     }
 
     @Override
-    public Set<Integer> addLike(Film film, User user) {
-        film.getLikedUsers().add(user.getId());
-        return film.getLikedUsers();
+    public List<Film> findAll() {
+        return new ArrayList<>(films.values());
+    }
+
+    @Override
+    public boolean addLike(Film film, User user) {
+        return false;
+    }
+
+    @Override
+    public List<Integer> findLikes(Integer id) {
+        return null;
     }
 
     @Override
     public boolean removeLike(Film film, User user) {
-        return film.getLikedUsers().remove(user.getId());
+        return false;
     }
 
     @Override
     public List<Film> findTop(Integer count) {
-        return findAll().stream()
-                .sorted((f0, f1) -> f1.getLikedUsers().size() - f0.getLikedUsers().size())
-                .limit(count)
-                .collect(Collectors.toList());
+        return null;
     }
 }

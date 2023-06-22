@@ -114,7 +114,7 @@ class FilmControllerTest {
     @Test
     void shouldLikeFilm() {
         filmController.like(testFilm.getId(), testUser.getId());
-        assertEquals(Set.of(testUser.getId()), testFilm.getLikedUsers());
+        assertEquals(List.of(testUser.getId()), filmController.getLikes(testFilm.getId()));
         assertThrows(NotFoundException.class, () -> filmController.like(testFilm.getId(), testUser.getId() + 1),
                 "this user does not exist");
         assertThrows(NotFoundException.class, () -> filmController.like(testFilm.getId() + 1, testUser.getId()),
@@ -125,7 +125,7 @@ class FilmControllerTest {
     void shouldUnlikeFilm() {
         shouldLikeFilm();
         filmController.unlike(testFilm.getId(), testUser.getId());
-        assertEquals(Set.of(), testFilm.getLikedUsers());
+        assertEquals(List.of(), filmController.getLikes(testFilm.getId()));
         assertThrows(NotFoundException.class, () -> filmController.unlike(testFilm.getId(), testUser.getId() + 1),
                 "this user does not exist");
         assertThrows(NotFoundException.class, () -> filmController.unlike(testFilm.getId() + 1, testUser.getId()),

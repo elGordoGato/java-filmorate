@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
 
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -14,7 +13,7 @@ public class InMemoryUserStorage implements UserStorage {
     private final HashMap<Integer, User> users = new HashMap<>();
 
     @Override
-    public Optional<User> putUser(User user) {
+    public Optional<User> addUser(User user) {
         return Optional.ofNullable(users.put(user.getId(), user));
     }
 
@@ -24,40 +23,39 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
+    public Optional<User> updateUser(User user) {
+        return Optional.empty();
+    }
+
+    @Override
     public boolean removeById(Integer id) {
         return Optional.ofNullable(users.remove(id)).isPresent();
     }
 
     @Override
-    public Set<User> findAll() {
-        return new HashSet<>(users.values());
+    public List<User> findAll() {
+        return new ArrayList<>(users.values());
     }
 
     @Override
     public Integer[] addFriend(User user, User friend) {
-        user.getFriends().add(friend.getId());
-        friend.getFriends().add(user.getId());
-        return new Integer[]{user.getFriends().size(), friend.getFriends().size()};
+
+        return null;
     }
 
     @Override
     public boolean removeFriend(User user, User friend) {
-        return (user.getFriends().remove(friend.getId()) && friend.getFriends().remove(user.getId()));
+        return false;
     }
 
 
     @Override
     public List<User> findFriends(User user) {
-        return user.getFriends().stream().sorted(Integer::compareTo).map(users::get)
-                .collect(Collectors.toList());
+        return null;
     }
 
     @Override
-    public Set<User> findCommonFriends(User user, User friend) {
-        Set<Integer> commonFriends = new HashSet<>(user.getFriends());
-        commonFriends.retainAll(friend.getFriends());
-        Arrays.sort(commonFriends.toArray());
-        return commonFriends.stream().map(users::get)
-                .collect(Collectors.toSet());
+    public List<User> findCommonFriends(User user, User friend) {
+        return null;
     }
 }
