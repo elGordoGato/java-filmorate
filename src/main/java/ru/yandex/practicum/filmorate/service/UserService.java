@@ -68,13 +68,12 @@ public class UserService {
 
 
     public void remove(Integer id) {
-        if(userStorage.removeById(id)){
+        if (userStorage.removeById(id)) {
             log.info("User: {} - deleted", id);
         } else {
             throw new NotFoundException(USER + id);
         }
     }
-
 
 
     public void makeFriends(Integer userId, Integer friendId) {

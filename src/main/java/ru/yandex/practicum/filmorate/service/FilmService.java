@@ -53,7 +53,7 @@ public class FilmService {
         if (film.isEmpty()) {
             throw new NotFoundException(FILM + id);
         }
-        log.info("Film found: {}", film);
+        log.info("Film found: {}", film.get());
         return film.get();
     }
 
@@ -75,7 +75,7 @@ public class FilmService {
     }
 
     public void likeFilm(Integer filmId, Integer userId) {
-        if(filmStorage.addLike(getById(filmId), userService.getById(userId))){
+        if (filmStorage.addLike(getById(filmId), userService.getById(userId))) {
             log.info("Film {} was liked by user: {}", filmId, userId);
         }
     }

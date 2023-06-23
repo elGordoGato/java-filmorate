@@ -1,10 +1,11 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.storage.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,26 +14,26 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Repository("UserDbStorage")
-public class UserDbStorage implements UserStorage{
+public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public UserDbStorage(JdbcTemplate jdbcTemplate){
-        this.jdbcTemplate=jdbcTemplate;
+    public UserDbStorage(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
 
     @Override
     public Optional<User> addUser(User user) {
-            String sqlQuery = "insert into film_user(id, email, login, birthday, name) " +
-                    "values (?, ?, ?, ?, ?)";
-            jdbcTemplate.update(sqlQuery,
-                    user.getId(),
-                    user.getEmail(),
-                    user.getLogin(),
-                    user.getBirthday(),
-                    user.getName());
+        String sqlQuery = "insert into film_user(id, email, login, birthday, name) " +
+                "values (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sqlQuery,
+                user.getId(),
+                user.getEmail(),
+                user.getLogin(),
+                user.getBirthday(),
+                user.getName());
         return findById(user.getId());
     }
 
@@ -40,7 +41,7 @@ public class UserDbStorage implements UserStorage{
     public Optional<User> findById(Integer id) {
         SqlRowSet userRows = jdbcTemplate.queryForRowSet("select * from film_user where id = ?", id);
         User user = null;
-        if(userRows.next()) {
+        if (userRows.next()) {
             user = User.builder()
                     .id(userRows.getInt("id"))
                     .email(Objects.requireNonNull(userRows.getString("email")))
@@ -68,15 +69,15 @@ public class UserDbStorage implements UserStorage{
 
     @Override
     public boolean removeById(Integer id) {
-            String sqlQuery = "delete from film_user where id = ?";
-            return jdbcTemplate.update(sqlQuery, id) > 0;
+        String sqlQuery = "delete from film_user where id = ?";
+        return jdbcTemplate.update(sqlQuery, id) > 0;
     }
 
     @Override
     public List<User> findAll() {
         String sql = "select * from film_user";
         return
-        jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs));
+                jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs));
     }
 
     private User makeUser(ResultSet rs) throws SQLException {
@@ -108,9 +109,9 @@ public class UserDbStorage implements UserStorage{
     @Override
     public List<User> findFriends(User user) {
         String sql = "select * from film_user WHERE id IN (SELECT friend_id " +
-                                                            "FROM user_friends " +
-                                                            "WHERE user_id = ? " +
-                                                            "ORDER BY friend_id)";
+                "FROM user_friends " +
+                "WHERE user_id = ? " +
+                "ORDER BY friend_id)";
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), user.getId());
     }
@@ -119,11 +120,11 @@ public class UserDbStorage implements UserStorage{
     public List<User> findCommonFriends(User user, User friend) {
         String sql = "SELECT * FROM film_user " +
                 "WHERE id IN (SELECT friend_id " +
-                             "FROM user_friends " +
-                             "WHERE user_id = ? " +
-                             "AND friend_id IN (SELECT friend_id " +
-                                               "FROM user_friends " +
-                                               "WHERE user_id = ?))" +
+                "FROM user_friends " +
+                "WHERE user_id = ? " +
+                "AND friend_id IN (SELECT friend_id " +
+                "FROM user_friends " +
+                "WHERE user_id = ?))" +
                 "ORDER BY id;";
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs), user.getId(), friend.getId());
