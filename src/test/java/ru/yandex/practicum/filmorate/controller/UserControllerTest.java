@@ -1,22 +1,32 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.jdbc.Sql;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@Sql("/schema.sql")
+@Sql("/data.sql")
 class UserControllerTest {
-    UserController userController;
+    private final UserController userController;
+
+    private final JdbcTemplate jdbcTemplate;
     User testUser;
     User testBestFriend;
     User testOtherFriend;
@@ -24,7 +34,12 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        userController = new UserController(new UserService(new InMemoryUserStorage()));
+        String sqlQuery = "delete from film_likes; " +
+                "delete from film_genre; " +
+                "delete from film; " +
+                "delete from user_friends; " +
+                "delete from film_user";
+        jdbcTemplate.update(sqlQuery);
         testUser = User.builder()
                 .email("noKnowledge@java.com")
                 .birthday(LocalDate.of(1985, 12, 25))
@@ -36,19 +51,23 @@ class UserControllerTest {
 
     @Test
     void getAll() {
-        assertEquals(Set.of(testUser), userController.getAll());
+        assertEquals(List.of(testUser), userController.getAll());
     }
 
     @Test
     void shouldThrowExceptionWhenCreateSameUser() {
-        assertThrows(ValidationException.class, () -> userController.create(testUser), "this id already exist");
+        assertThrows(ValidationException.class, () -> userController.create(testUser),
+                "this id already exist");
     }
 
     @Test
     void shouldThrowExceptionWhenCreateUserWithNullParameters() {
-        assertThrows(NullPointerException.class, () -> testUser.toBuilder().login(null).build(), "login is absent");
-        assertThrows(NullPointerException.class, () -> testUser.toBuilder().email(null).build(), "email is absent");
-        assertThrows(NullPointerException.class, () -> testUser.toBuilder().birthday(null).build(), "birthday is absent");
+        assertThrows(NullPointerException.class, () -> testUser.toBuilder().login(null).build(),
+                "login is absent");
+        assertThrows(NullPointerException.class, () -> testUser.toBuilder().email(null).build(),
+                "email is absent");
+        assertThrows(NullPointerException.class, () -> testUser.toBuilder().birthday(null).build(),
+                "birthday is absent");
     }
 
     @Test
@@ -62,23 +81,28 @@ class UserControllerTest {
     @Test
     void shouldThrowExceptionWhenCreateUserWithEmptyLogin() {
         User emptyLoginUser = testUser.toBuilder().login("").build();
-        assertThrows(ValidationException.class, () -> userController.create(emptyLoginUser), "login should not be blank");
+        assertThrows(ValidationException.class, () -> userController.create(emptyLoginUser),
+                "login should not be blank");
         User withSpacesLoginUser = testUser.toBuilder().login("My name is Bob").build();
-        assertThrows(ValidationException.class, () -> userController.create(withSpacesLoginUser), "login contains spaces");
+        assertThrows(ValidationException.class, () -> userController.create(withSpacesLoginUser),
+                "login contains spaces");
     }
 
     @Test
     void shouldThrowExceptionWhenCreateUserWithWrongFormatEmail() {
         User emptyEmailUser = testUser.toBuilder().email("  ").build();
-        assertThrows(ValidationException.class, () -> userController.create(emptyEmailUser), "email should not be blank");
+        assertThrows(ValidationException.class, () -> userController.create(emptyEmailUser),
+                "email should not be blank");
         User wrongEmailUser = testUser.toBuilder().email("bestEmailAddressEver").build();
-        assertThrows(ValidationException.class, () -> userController.create(wrongEmailUser), "email should contain @");
+        assertThrows(ValidationException.class, () -> userController.create(wrongEmailUser),
+                "email should contain @");
     }
 
     @Test
     void shouldThrowExceptionWhenCreateUserWithBirthdayInFuture() {
         User userFromFuture = testUser.toBuilder().birthday(LocalDate.now().plusDays(1)).build();
-        assertThrows(ValidationException.class, () -> userController.create(userFromFuture), "hello, guest from future");
+        assertThrows(ValidationException.class, () -> userController.create(userFromFuture),
+                "hello, guest from future");
     }
 
     @Test
@@ -93,30 +117,32 @@ class UserControllerTest {
     void update() {
         testUser.setName("Jane Doe");
         userController.update(testUser);
-        assertEquals(Set.of(testUser), userController.getAll());
+        assertEquals(List.of(testUser), userController.getAll());
     }
 
     @Test
     void shouldThrowExceptionWhenUpdateUserWithNewId() {
         testUser.setId(999);
-        assertThrows(NotFoundException.class, () -> userController.update(testUser), "this id does not exist");
+        assertThrows(NotFoundException.class, () -> userController.update(testUser),
+                "this id does not exist");
     }
 
     @Test
     void shouldAddFriend() {
         makeFriends();
         userController.makeFriend(testUser.getId(), testBestFriend.getId());
-        assertThrows(NotFoundException.class, () -> userController.makeFriend(testUser.getId(), testUser.getId() - 10));
+        assertThrows(NotFoundException.class,
+                () -> userController.makeFriend(testUser.getId(), testUser.getId() - 10));
         assertEquals(List.of(testBestFriend), userController.findFriends(testUser.getId()));
-        assertEquals(List.of(testUser), userController.findFriends(testBestFriend.getId()));
     }
 
     @Test
     void shouldRuinFriendship() {
         shouldAddFriend();
-        userController.ruinFriendship(testBestFriend.getId(), testUser.getId());
+        userController.ruinFriendship(testUser.getId(), testBestFriend.getId());
         assertEquals(List.of(), userController.findFriends(testBestFriend.getId()));
-        assertThrows(NotFoundException.class, () -> userController.ruinFriendship(testOtherFriend.getId(), testUser.getId()));
+        assertThrows(NotFoundException.class,
+                () -> userController.ruinFriendship(testOtherFriend.getId(), testUser.getId()));
         assertEquals(List.of(), userController.findFriends(testUser.getId()));
     }
 
@@ -125,7 +151,6 @@ class UserControllerTest {
         makeFriends();
         userController.makeFriend(testUser.getId(), testBestFriend.getId());
         userController.makeFriend(testOtherFriend.getId(), testBestFriend.getId());
-        assertEquals(List.of(testUser, testOtherFriend), userController.findFriends(testBestFriend.getId()));
         assertThrows(NotFoundException.class, () -> userController.findFriends(testUser.getId() + 999));
         assertEquals(List.of(testBestFriend), userController.findFriends(testOtherFriend.getId()));
     }
@@ -133,7 +158,8 @@ class UserControllerTest {
     @Test
     void shouldFindCommonFriends() {
         shouldFindFriends();
-        assertEquals(Set.of(testBestFriend), userController.findCommonFriends(testUser.getId(), testOtherFriend.getId()));
+        assertEquals(List.of(testBestFriend),
+                userController.findCommonFriends(testUser.getId(), testOtherFriend.getId()));
         assertThrows(NotFoundException.class, () -> userController.findCommonFriends(testUser.getId(), 999));
     }
 

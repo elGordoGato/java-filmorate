@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
@@ -19,6 +20,7 @@ public class Film {
     private final Integer duration;
     private Integer id;
     private Mpa mpa;
+    private List<Genre> genres;
 
 
 }
