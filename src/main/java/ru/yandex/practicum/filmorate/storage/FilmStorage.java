@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FilmStorage {
-    Film add(Film film);
+    Optional<Film> add(Film film);
 
     Optional<Film> findById(Integer id);
 
-    Film update(Film film);
+    Optional<Film> update(Film film);
 
     boolean removeById(Integer id);
 

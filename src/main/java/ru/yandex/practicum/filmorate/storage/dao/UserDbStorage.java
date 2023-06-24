@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
@@ -9,9 +10,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Repository("UserDbStorage")
 public class UserDbStorage implements UserStorage {
@@ -25,21 +24,23 @@ public class UserDbStorage implements UserStorage {
 
 
     @Override
-    public Optional<User> addUser(User user) {
-        String sqlQuery = "insert into film_user(id, email, login, birthday, name) " +
-                "values (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sqlQuery,
-                user.getId(),
-                user.getEmail(),
-                user.getLogin(),
-                user.getBirthday(),
-                user.getName());
-        return findById(user.getId());
+    public User addUser(User user) {
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("film_user")
+                .usingGeneratedKeyColumns("id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("email", user.getEmail());
+        parameters.put("login", user.getLogin());
+        parameters.put("birthday", user.getBirthday());
+        parameters.put("name", user.getName());
+        Number id = simpleJdbcInsert.executeAndReturnKey(parameters);
+        user.setId(id.intValue());
+        return user;
     }
 
     @Override
     public Optional<User> findById(Integer id) {
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet("select * from film_user where id = ?", id);
+        SqlRowSet userRows = jdbcTemplate.queryForRowSet("SELECT * FROM film_user WHERE id = ?", id);
         User user = null;
         if (userRows.next()) {
             user = User.builder()
@@ -55,27 +56,27 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Optional<User> updateUser(User user) {
-        String sqlQuery = "update film_user set " +
+        String sqlQuery = "UPDATE film_user SET " +
                 "email = ?, login = ?, birthday = ?, name = ? " +
-                "where id = ?";
-        jdbcTemplate.update(sqlQuery,
+                "WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sqlQuery,
                 user.getEmail(),
                 user.getLogin(),
                 user.getBirthday(),
                 user.getName(),
                 user.getId());
-        return findById(user.getId());
+        return rowsAffected > 0 ? Optional.of(user) : Optional.empty();
     }
 
     @Override
     public boolean removeById(Integer id) {
-        String sqlQuery = "delete from film_user where id = ?";
+        String sqlQuery = "DELETE FROM film_user WHERE id = ?";
         return jdbcTemplate.update(sqlQuery, id) > 0;
     }
 
     @Override
     public List<User> findAll() {
-        String sql = "select * from film_user";
+        String sql = "SELECT * FROM film_user";
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs));
     }
@@ -92,23 +93,25 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Integer[] addFriend(User user, User friend) {
-        String sqlQuery = "insert into user_friends (user_id, friend_id) " +
-                "values (?, ?)";
-        jdbcTemplate.update(sqlQuery,
-                user.getId(),
-                friend.getId());
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("user_friends")
+                .usingColumns("user_id", "friend_id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("user_id", user.getId());
+        parameters.put("friend_id", friend.getId());
+        simpleJdbcInsert.execute(parameters);
         return new Integer[]{findFriends(user).size(), findFriends(friend).size()};
     }
 
     @Override
     public boolean removeFriend(User user, User friend) {
-        String sqlQuery = "delete from user_friends where user_id = ? AND friend_id = ?";
+        String sqlQuery = "DELETE FROM user_friends WHERE user_id = ? AND friend_id = ?";
         return jdbcTemplate.update(sqlQuery, user.getId(), friend.getId()) > 0;
     }
 
     @Override
     public List<User> findFriends(User user) {
-        String sql = "select * from film_user WHERE id IN (SELECT friend_id " +
+        String sql = "SELECT * FROM film_user WHERE id IN (SELECT friend_id " +
                 "FROM user_friends " +
                 "WHERE user_id = ? " +
                 "ORDER BY friend_id)";

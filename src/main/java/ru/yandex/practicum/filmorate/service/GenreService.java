@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
+
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class GenreService {
-    private static final String GENRE = "Жанр";
     private final GenreStorage genreStorage;
 
     @Autowired
@@ -21,12 +20,9 @@ public class GenreService {
     }
 
     public Genre getById(Integer id) {
-        Optional<Genre> genre = genreStorage.findById(id);
-        if (genre.isEmpty()) {
-            throw new NotFoundException(GENRE + id);
-        }
-        log.info("Genre found: {}", genre.get());
-        return genre.get();
+        Genre genre = genreStorage.findById(id).orElseThrow(() -> new NotFoundException("Жанр " + id));
+        log.info("Genre found: {}", genre);
+        return genre;
     }
 
     public List<Genre> getAll() {

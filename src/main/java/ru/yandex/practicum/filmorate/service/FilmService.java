@@ -8,26 +8,32 @@ import ru.yandex.practicum.filmorate.controller.validation.FilmValidator;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class FilmService {
 
     private static final String FILM = "Фильм";
-    private static Integer counter = 1;
 
     private final UserService userService;
 
     private final FilmStorage filmStorage;
 
+    private final GenreStorage genreStorage;
+
     @Autowired
-    public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage, UserService userService) {
+    public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
+                       UserService userService, GenreStorage genreStorage) {
         this.filmStorage = filmStorage;
         this.userService = userService;
+        this.genreStorage = genreStorage;
     }
 
     public Film create(Film film) {
@@ -35,35 +41,25 @@ public class FilmService {
         if (filmStorage.findById(film.getId()).isPresent()) {
             throw new ValidationException("Этот фильм уже существует");
         }
-        if (film.getId() == null) {
-            film.setId(counter++);
-        } else if (counter < film.getId()) {
-            counter = film.getId();
-        }
-        log.info("Film created: {}", film);
-        return filmStorage.add(film);
+        Film createdFilm = filmStorage.add(film).orElseThrow(() -> new NotFoundException(FILM + film.getId()));
+        log.info("Film created: {}", createdFilm);
+        return createdFilm;
     }
 
     public List<Film> getAll() {
-        return filmStorage.findAll();
+        return setGenres(filmStorage.findAll());
     }
 
     public Film getById(Integer id) {
-        Optional<Film> film = filmStorage.findById(id);
-        if (film.isEmpty()) {
-            throw new NotFoundException(FILM + id);
-        }
-        log.info("Film found: {}", film.get());
-        return film.get();
+        return filmStorage.findById(id).orElseThrow(() -> new NotFoundException(FILM + id));
     }
 
     public Film update(Film film) {
         FilmValidator.validate(film);
-        if (filmStorage.findById(film.getId()).isEmpty()) {
-            throw new NotFoundException(FILM + film.getId());
-        }
-        log.info("Film updated\nNew value: {}", filmStorage.update(film));
-        return filmStorage.findById(film.getId()).get();
+        Film updatedFilm = filmStorage.update(film)
+                .orElseThrow(() -> new NotFoundException(FILM + film.getId()));
+        log.info("Film updated\nNew value: {}", updatedFilm);
+        return updatedFilm;
     }
 
     public void removeById(Integer id) {
@@ -88,12 +84,21 @@ public class FilmService {
     }
 
     public List<Film> getTop(Integer count) {
-        List<Film> topFilms = filmStorage.findTop(count);
+        List<Film> topFilms = setGenres(filmStorage.findTop(count));
         log.info("Top {} IMDB: {}", count, topFilms);
         return topFilms;
     }
 
+
     public List<Integer> getLikes(Integer id) {
         return filmStorage.findLikes(id);
+    }
+
+    private List<Film> setGenres(List<Film> films) {
+        Map<Integer, List<Genre>> allGenres = genreStorage.findAllFilmGenres();
+        for (Film film : films) {
+            film.setGenres(allGenres.getOrDefault(film.getId(), new ArrayList<>()));
+        }
+        return films;
     }
 }
