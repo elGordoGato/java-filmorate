@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.storage.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -12,9 +14,8 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository("FilmDbStorage")
 public class FilmDbStorage implements FilmStorage {
@@ -27,31 +28,35 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film add(Film film) {
-        String sqlQuery = "insert into film(id, name, description, release_date, duration, rating_id) " +
-                "values (?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sqlQuery,
-                film.getId(),
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId());
+    public Optional<Film> add(Film film) {
+        SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("film")
+                .usingGeneratedKeyColumns("id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("name", film.getName());
+        parameters.put("description", film.getDescription());
+        parameters.put("release_date", film.getReleaseDate());
+        parameters.put("duration", film.getDuration());
+        parameters.put("rating_id", film.getMpa().getId());
+        Number key = insert.executeAndReturnKey(parameters);
+        film.setId(key.intValue());
         updateGenres(film);
-        return findById(film.getId()).orElseThrow();
+        return findById(film.getId());
     }
 
-    private void updateGenres(Film film) {
-        String sqlQuery = "insert into film_genre(film_id, genre_id) " +
-                "values (?, ?)";
+    private void updateGenres(Film film) throws DataIntegrityViolationException {
+        String sqlQuery = "INSERT INTO film_genre(film_id, genre_id) " +
+                "VALUES (?, ?)";
         if (film.getGenres() != null && film.getGenres().size() > 0) {
-            film.getGenres().forEach(genre -> jdbcTemplate.update(sqlQuery, film.getId(), genre.getId()));
+            List<Object[]> params = film.getGenres().stream()
+                    .map(genre -> new Object[]{film.getId(), genre.getId()}).collect(Collectors.toList());
+            jdbcTemplate.batchUpdate(sqlQuery, params);
         }
     }
 
     @Override
     public Optional<Film> findById(Integer id) {
-        SqlRowSet filmRows = jdbcTemplate.queryForRowSet("SELECT f.*, m.name \"mpa_name\" " +
+        SqlRowSet filmRows = jdbcTemplate.queryForRowSet("SELECT f.*, m.name \"mpa\" " +
                 "FROM film AS f " +
                 "LEFT JOIN film_rating AS m ON f.rating_id = m.id " +
                 "WHERE f.id = ?", id);
@@ -65,15 +70,15 @@ public class FilmDbStorage implements FilmStorage {
                     .duration(filmRows.getInt("duration"))
                     .mpa(Mpa.builder()
                             .id(filmRows.getInt("rating_id"))
-                            .name(filmRows.getString("mpa_name"))
+                            .name(filmRows.getString("mpa"))
                             .build())
-                    .genres(findGenres(id))
+                    .genres(findGenresById(id))
                     .build();
         }
         return Optional.ofNullable(film);
     }
 
-    private List<Genre> findGenres(Integer id) {
+    private List<Genre> findGenresById(Integer id) {
         String sql = "SELECT * FROM genre WHERE id IN (SELECT genre_id FROM film_genre WHERE film_id = ?)";
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> Genre.builder()
@@ -84,27 +89,31 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film update(Film film) {
-        String sqlQuery = "update film set " +
+    public Optional<Film> update(Film film) {
+        String sqlQuery = "UPDATE film SET " +
                 "name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
-                "where id = ?;" +
-                "delete from film_genre where film_id = ?";
-        jdbcTemplate.update(sqlQuery,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId(),
-                film.getId(),
-                film.getId());
-        updateGenres(film);
-        return findById(film.getId()).orElseThrow();
+                "WHERE id = ?;" +
+                "DELETE FROM film_genre WHERE film_id = ?";
+        try {
+            jdbcTemplate.update(sqlQuery,
+                    film.getName(),
+                    film.getDescription(),
+                    film.getReleaseDate(),
+                    film.getDuration(),
+                    film.getMpa().getId(),
+                    film.getId(),
+                    film.getId());
+            updateGenres(film);
+        } catch (DataIntegrityViolationException e) {
+            return Optional.empty();
+        }
+        return findById(film.getId());
     }
 
     @Override
     public boolean removeById(Integer id) {
-        String sqlQuery = "delete from film where id = ?;" +
-                "delete from film_genre where film_id = ?";
+        String sqlQuery = "DELETE FROM film WHERE id = ?;" +
+                "DELETE FROM film_genre WHERE film_id = ?";
         return jdbcTemplate.update(sqlQuery, id, id) > 0;
     }
 
@@ -129,30 +138,32 @@ public class FilmDbStorage implements FilmStorage {
                         .id(rs.getInt("rating_id"))
                         .name(rs.getString("mpa_name"))
                         .build())
-                .genres(findGenres(id))
                 .build();
     }
 
 
     @Override
     public boolean addLike(Film film, User user) {
-        String sqlQuery = "insert into film_likes (film_id, liked_user_id) " +
-                "values (?, ?)";
-        return jdbcTemplate.update(sqlQuery,
-                film.getId(),
-                user.getId()) > 0;
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("film_likes")
+                .usingColumns("film_id", "liked_user_id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("film_id", film.getId());
+        parameters.put("liked_user_id", user.getId());
+        int rowsAffected = simpleJdbcInsert.execute(parameters);
+        return rowsAffected > 0;
     }
 
     @Override
     public List<Integer> findLikes(Integer id) {
-        String sql = "select liked_user_id from film_likes WHERE film_id = ?";
+        String sql = "SELECT liked_user_id FROM film_likes WHERE film_id = ?";
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("liked_user_id"), id);
     }
 
     @Override
     public boolean removeLike(Film film, User user) {
-        String sqlQuery = "delete from film_likes where film_id = ? AND liked_user_id = ?";
+        String sqlQuery = "DELETE FROM film_likes WHERE film_id = ? AND liked_user_id = ?";
         return jdbcTemplate.update(sqlQuery, film.getId(), user.getId()) > 0;
     }
 

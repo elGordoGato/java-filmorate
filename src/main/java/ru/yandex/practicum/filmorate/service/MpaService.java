@@ -8,12 +8,10 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class MpaService {
-    private static final String MPA = "Возрастной рейтинг";
     private final MpaStorage mpaStorage;
 
     @Autowired
@@ -22,12 +20,9 @@ public class MpaService {
     }
 
     public Mpa getById(Integer id) {
-        Optional<Mpa> mpa = mpaStorage.findById(id);
-        if (mpa.isEmpty()) {
-            throw new NotFoundException(MPA + id);
-        }
-        log.info("Mpa found: {}", mpa.get());
-        return mpa.get();
+        Mpa mpa = mpaStorage.findById(id).orElseThrow(() -> new NotFoundException("Возрастной рейтинг " + id));
+        log.info("Mpa found: {}", mpa);
+        return mpa;
     }
 
     public List<Mpa> getAll() {

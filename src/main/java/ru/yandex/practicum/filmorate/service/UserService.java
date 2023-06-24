@@ -11,13 +11,11 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class UserService {
     private static final String USER = "Пользователь #";
-    private static Integer counter = 1;
 
     private final UserStorage userStorage;
 
@@ -28,12 +26,9 @@ public class UserService {
 
 
     public User getById(Integer id) {
-        Optional<User> user = userStorage.findById(id);
-        if (user.isEmpty()) {
-            throw new NotFoundException(USER + id);
-        }
+        User user = userStorage.findById(id).orElseThrow(() -> new NotFoundException(USER + id));
         log.info("User found: {}", user);
-        return user.get();
+        return user;
     }
 
     public List<User> getAll() {
@@ -45,25 +40,18 @@ public class UserService {
         if (userStorage.findAll().contains(user)) {
             throw new ValidationException("Данный пользователь уже существует");
         }
-        if (user.getId() == null) {
-            user.setId(counter++);
-        } else if (counter < user.getId()) {
-            counter = user.getId();
-        }
-        setupUser(user);
-        userStorage.addUser(user);
-        log.info("User created: {}", user);
-        return user;
+        setName(user);
+        User createdUser = userStorage.addUser(user);
+        log.info("User created: {}", createdUser);
+        return createdUser;
     }
 
     public User update(User user) {
         UserValidator.validate(user);
-        if (userStorage.findById(user.getId()).isEmpty()) {
-            throw new NotFoundException(USER + user.getId());
-        }
-        setupUser(user);
-        log.info("User updated: {}\nNew value: {}", userStorage.updateUser(user), user);
-        return userStorage.findById(user.getId()).get();
+        setName(user);
+        User updatedUser = userStorage.updateUser(user).orElseThrow(() -> new NotFoundException(USER + user.getId()));
+        log.info("User updated\nNew value: {}", updatedUser);
+        return updatedUser;
     }
 
 
@@ -97,7 +85,7 @@ public class UserService {
         return userStorage.findCommonFriends(getById(userId), getById(friendId));
     }
 
-    private void setupUser(User user) {
+    private void setName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }

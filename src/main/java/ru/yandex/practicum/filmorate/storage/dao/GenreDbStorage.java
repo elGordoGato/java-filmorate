@@ -9,8 +9,11 @@ import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class GenreDbStorage implements GenreStorage {
@@ -43,5 +46,17 @@ public class GenreDbStorage implements GenreStorage {
     public List<Genre> findAll() {
         String sqlQuery = "SELECT * FROM genre";
         return jdbcTemplate.query(sqlQuery, this::mapRowToGenre);
+    }
+
+    @Override
+    public Map<Integer, List<Genre>> findAllFilmGenres() {
+        String sql = "SELECT fg.film_id, g.* FROM genre AS g RIGHT JOIN film_genre AS fg ON g.id = fg.genre_id";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new AbstractMap.SimpleEntry<>(rs.getInt("film_id"),
+                        Genre.builder()
+                                .id(rs.getInt("id"))
+                                .name(rs.getString("name"))
+                                .build()))
+                .stream().collect(Collectors.groupingBy(Map.Entry::getKey,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
     }
 }

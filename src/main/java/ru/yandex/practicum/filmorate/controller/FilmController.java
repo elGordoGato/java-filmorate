@@ -35,7 +35,9 @@ public class FilmController {
     @GetMapping(value = "/{id}")
     public Film getById(@PathVariable Integer id) {
         log.info("Request to get film with id: {}", id);
-        return filmService.getById(id);
+        Film film = filmService.getById(id);
+        log.info("Film found: {}", film);
+        return film;
     }
 
     @PostMapping

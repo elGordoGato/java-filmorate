@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserStorage {
-    Optional<User> addUser(User user);
+    User addUser(User user);
 
     Optional<User> findById(Integer id);
 
