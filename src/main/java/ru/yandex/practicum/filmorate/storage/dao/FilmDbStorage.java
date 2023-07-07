@@ -179,4 +179,5 @@ public class FilmDbStorage implements FilmStorage {
         return
                 jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), count);
     }
+    private void emptyMethod(){}
 }
