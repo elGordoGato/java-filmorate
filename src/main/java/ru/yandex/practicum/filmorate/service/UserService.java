@@ -1,43 +1,37 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.controller.validation.NotFoundException;
 import ru.yandex.practicum.filmorate.controller.validation.UserValidator;
 import ru.yandex.practicum.filmorate.controller.validation.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Slf4j
 @Service
 public class UserService {
     private static final String USER = "Пользователь #";
-    private static Integer counter = 1;
 
+    private final UserStorage userStorage;
 
-    private final InMemoryUserStorage userStorage;
-
-
-    public UserService(InMemoryUserStorage userStorage) {
+    @Autowired
+    public UserService(@Qualifier("UserDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
 
     public User getById(Integer id) {
-        Optional<User> user = userStorage.findById(id);
-        if (user.isEmpty()) {
-            throw new NotFoundException(USER + id);
-        }
+        User user = userStorage.findById(id).orElseThrow(() -> new NotFoundException(USER + id));
         log.info("User found: {}", user);
-        return user.get();
+        return user;
     }
 
-    public HashSet<User> getAll() {
+    public List<User> getAll() {
         return userStorage.findAll();
     }
 
@@ -46,31 +40,27 @@ public class UserService {
         if (userStorage.findAll().contains(user)) {
             throw new ValidationException("Данный пользователь уже существует");
         }
-        if (user.getId() == null) {
-            user.setId(counter++);
-        } else if (counter < user.getId()) {
-            counter = user.getId();
-        }
-        setupUser(user);
-        userStorage.putUser(user);
-        log.info("User created: {}", user);
-        return user;
+        setName(user);
+        User createdUser = userStorage.addUser(user);
+        log.info("User created: {}", createdUser);
+        return createdUser;
     }
 
     public User update(User user) {
         UserValidator.validate(user);
-        if (userStorage.findById(user.getId()).isEmpty()) {
-            throw new NotFoundException(USER + user.getId());
-        }
-        setupUser(user);
-        log.info("User updated: {}\nNew value: {}", userStorage.putUser(user), user);
-        return userStorage.findById(user.getId()).get();
+        setName(user);
+        User updatedUser = userStorage.updateUser(user).orElseThrow(() -> new NotFoundException(USER + user.getId()));
+        log.info("User updated\nNew value: {}", updatedUser);
+        return updatedUser;
     }
 
 
     public void remove(Integer id) {
-        log.info("User: {} - deleted", userStorage.removeById(id)
-                .orElseThrow(() -> new NotFoundException(USER + id)));
+        if (userStorage.removeById(id)) {
+            log.info("User: {} - deleted", id);
+        } else {
+            throw new NotFoundException(USER + id);
+        }
     }
 
 
@@ -91,16 +81,13 @@ public class UserService {
         return userStorage.findFriends(getById(userId));
     }
 
-    public Set<User> getCommonFriends(Integer userId, Integer friendId) {
+    public List<User> getCommonFriends(Integer userId, Integer friendId) {
         return userStorage.findCommonFriends(getById(userId), getById(friendId));
     }
 
-    private void setupUser(User user) {
+    private void setName(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
-        }
-        if (user.getFriends() == null) {
-            user.setFriends(new HashSet<>());
         }
     }
 }

@@ -1,2 +1,31 @@
-# java-filmorate
-Template repository for Filmorate project.
+# Filmorate
+
+≡ Краткое руководство Filmorate
+
+Фильмов много — и с каждым годом становится всё больше. Чем их больше, тем больше разных оценок. 
+Чем больше оценок, тем сложнее сделать выбор. Однако не время сдаваться! Перед вами сервис, 
+который будет работать с фильмами и оценками пользователей, а также возвращать топ-10 фильмов, 
+рекомендованных к просмотру. Теперь ни вам, ни вашим друзьям не придётся долго размышлять, что посмотреть вечером.
+## Examples of requests:
+
+- PUT /users/{id}/friends/{friendId} — добавление в друзья.
+
+- DELETE /users/{id}/friends/{friendId} — удаление из друзей.
+
+- GET /users/{id}/friends — возвращаем список пользователей, являющихся его друзьями.
+
+- GET /users/{id}/friends/common/{otherId} — список друзей, общих с другим пользователем.
+
+- PUT /films/{id}/like/{userId} — пользователь ставит лайк фильму.
+
+- DELETE /films/{id}/like/{userId} — пользователь удаляет лайк.
+
+- GET /films/popular?count={count} — возвращает список из первых count фильмов по количеству лайков. Если значение параметра count не задано, верните первые 10.
+
+
+
+## ER diagram
+![ERdiagram.svg](src%2Fmain%2Fresources%2FERdiagram.svg)
+
+### https://dbdiagram.io/d/649562a402bd1c4a5ef4be7a
+

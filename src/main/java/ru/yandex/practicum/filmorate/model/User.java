@@ -6,7 +6,6 @@ import lombok.NonNull;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.Set;
 
 @Data
 @Builder(toBuilder = true)
@@ -19,7 +18,6 @@ public class User {
     private final LocalDate birthday;
     private Integer id;
     private String name;
-    private Set<Integer> friends;
 
     @Override
     public boolean equals(Object o) {

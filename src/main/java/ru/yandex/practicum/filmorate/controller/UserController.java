@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,9 +23,9 @@ public class UserController {
     }
 
     @GetMapping
-    public Set<User> getAll() {
+    public List<User> getAll() {
         log.info("Request to get all users");
-        Set<User> allUsers = userService.getAll();
+        List<User> allUsers = userService.getAll();
         log.info("Found {} users: {}", allUsers.size(), allUsers.stream()
                 .map(user -> String.format("User #%s - %s\n", user.getId(), user.getName()))
                 .collect(Collectors.toList()));
@@ -79,9 +78,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Set<User> findCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
+    public List<User> findCommonFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
         log.info("Request to find common friends for user: #{} and #{}", id, otherId);
-        Set<User> commonFriends = userService.getCommonFriends(id, otherId);
+        List<User> commonFriends = userService.getCommonFriends(id, otherId);
         log.info("Found {} common friends, Friend's ID: {}", commonFriends.size(),
                 commonFriends.stream().map(User::getId).collect(Collectors.toList()));
         return commonFriends;

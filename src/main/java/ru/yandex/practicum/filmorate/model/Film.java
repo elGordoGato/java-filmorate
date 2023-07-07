@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
@@ -19,7 +19,8 @@ public class Film {
     @NonNull
     private final Integer duration;
     private Integer id;
-    private Set<Integer> likedUsers;
+    private Mpa mpa;
+    private List<Genre> genres;
 
 
 }

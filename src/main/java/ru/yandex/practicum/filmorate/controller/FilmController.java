@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,9 +23,9 @@ public class FilmController {
     }
 
     @GetMapping
-    public Set<Film> getAll() {
+    public List<Film> getAll() {
         log.info("Request to get all films");
-        Set<Film> allFilms = filmService.getAll();
+        List<Film> allFilms = filmService.getAll();
         log.info("Found {} films: {}", allFilms.size(), allFilms.stream()
                 .map(film -> String.format("Film #%s - %s\n", film.getId(), film.getName()))
                 .collect(Collectors.toList()));
@@ -36,7 +35,9 @@ public class FilmController {
     @GetMapping(value = "/{id}")
     public Film getById(@PathVariable Integer id) {
         log.info("Request to get film with id: {}", id);
-        return filmService.getById(id);
+        Film film = filmService.getById(id);
+        log.info("Film found: {}", film);
+        return film;
     }
 
     @PostMapping
@@ -61,6 +62,12 @@ public class FilmController {
     public void like(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Request to like film #{} from user #{}", id, userId);
         filmService.likeFilm(id, userId);
+    }
+
+    @GetMapping("/{id}/like")
+    public List<Integer> getLikes(@PathVariable Integer id) {
+        log.info("Request to get likes for film #{}", id);
+        return filmService.getLikes(id);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
